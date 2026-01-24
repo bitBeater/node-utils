@@ -1,11 +1,11 @@
-# iggs-node-utils
+# node-utils
 
 simple, lightweight, dependenciesless, nodejs generic helper library
 
 ## Installation
 
 ```bash
-npm i iggs-node-utils
+npm i @bitbeater/node-utils
 ```
 
-[Documentation](https://bitBeater.github.io/iggs-node-utils/index.html)
+[Documentation](https://bitbeater.github.io/node-utils/index.html)

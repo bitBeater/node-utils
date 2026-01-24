@@ -1,6 +1,12 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getOsDeskotpDir = exports.getOsUserBinDir = exports.getOsUserHomeDir = exports.getOsUsrConfDir = exports.getOsSysConfDir = exports.getOsSharedDataDir = exports.getOsAppInstallDir = void 0;
+exports.getOsAppInstallDir = getOsAppInstallDir;
+exports.getOsSharedDataDir = getOsSharedDataDir;
+exports.getOsSysConfDir = getOsSysConfDir;
+exports.getOsUsrConfDir = getOsUsrConfDir;
+exports.getOsUserHomeDir = getOsUserHomeDir;
+exports.getOsUserBinDir = getOsUserBinDir;
+exports.getOsDeskotpDir = getOsDeskotpDir;
 const path_1 = require("path");
 /**
  * Directory for storing app data during development.
@@ -17,7 +23,6 @@ function getOsAppInstallDir() {
             throw new Error(`Unsupported OS: ${process.platform}`);
     }
 }
-exports.getOsAppInstallDir = getOsAppInstallDir;
 /**
  * Architecture-independent (shared) data.
  * e.g. C:\ProgramData\ on win32 or /usr/share on Linux.
@@ -34,7 +39,6 @@ function getOsSharedDataDir() {
             throw new Error(`Unsupported OS: ${process.platform}`);
     }
 }
-exports.getOsSharedDataDir = getOsSharedDataDir;
 /**
  * OS-specific system wide dir for app configurations.
  */
@@ -50,7 +54,6 @@ function getOsSysConfDir() {
             throw new Error(`Unsupported OS: ${process.platform}`);
     }
 }
-exports.getOsSysConfDir = getOsSysConfDir;
 /**
  * USER-specific dir for app configurations.
  */
@@ -65,7 +68,6 @@ function getOsUsrConfDir() {
             throw new Error(`Unsupported OS: ${process.platform}`);
     }
 }
-exports.getOsUsrConfDir = getOsUsrConfDir;
 /**
  * Returns the home directory of the current OS user.
  * e.g. C:\Users\<user> on win32 or /home/<user> on Linux.
@@ -81,7 +83,6 @@ function getOsUserHomeDir() {
             throw new Error(`Unsupported OS: ${process.platform}`);
     }
 }
-exports.getOsUserHomeDir = getOsUserHomeDir;
 function getOsUserBinDir() {
     switch (process.platform) {
         case 'linux':
@@ -94,9 +95,7 @@ function getOsUserBinDir() {
             throw new Error(`Unsupported OS: ${process.platform}`);
     }
 }
-exports.getOsUserBinDir = getOsUserBinDir;
 function getOsDeskotpDir() {
     return (0, path_1.resolve)(getOsUserHomeDir(), 'Desktop');
 }
-exports.getOsDeskotpDir = getOsDeskotpDir;
 //# sourceMappingURL=dirs.js.map

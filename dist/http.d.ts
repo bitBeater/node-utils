@@ -1,9 +1,6 @@
-/// <reference types="node" />
-/// <reference types="node" />
-/// <reference types="node" />
 import { PathLike } from 'fs';
 import { ClientRequest, IncomingMessage, RequestOptions } from 'http';
-import { reviver } from 'iggs-utils';
+import { Reviver } from '@bitbeater/ecma-utils/revivers';
 import { URL } from 'url';
 export interface HttpRequestOptions extends RequestOptions {
     url?: string;
@@ -18,7 +15,7 @@ export interface HttpResponse<T> {
 export declare function httpSimpleReq(reqOpts: HttpRequestOptions | string | URL, callback?: (res: IncomingMessage, payload?: unknown) => void): ClientRequest;
 export declare function httpRequest(reqOpts: HttpRequestOptions | string | URL, payload?: unknown): Promise<HttpResponse<string>>;
 export declare function httpRawRequest(reqOpts: HttpRequestOptions | string | URL, payload?: any): Promise<HttpResponse<string>>;
-export declare function httpJsonRequest<T>(req: HttpRequestOptions | string | URL, data?: object | string, revivers?: reviver.Reviver<any>[]): Promise<HttpResponse<T>>;
+export declare function httpJsonRequest<T>(req: HttpRequestOptions | string | URL, data?: object | string, revivers?: Reviver<any>[]): Promise<HttpResponse<T>>;
 export declare function getRequestFn(req: RequestOptions | string | URL): (options: RequestOptions | string | URL, callback?: (res: IncomingMessage) => void) => ClientRequest;
 /**
  * Downloads from url and save on fs, optimal for big files because uses streams.

@@ -1,11 +1,19 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.Header = exports.Method = exports.cookiesToObj = exports.objToCookies = exports.downloadOnFs = exports.getRequestFn = exports.httpJsonRequest = exports.httpRawRequest = exports.httpRequest = exports.httpSimpleReq = void 0;
+exports.Header = exports.Method = void 0;
+exports.httpSimpleReq = httpSimpleReq;
+exports.httpRequest = httpRequest;
+exports.httpRawRequest = httpRawRequest;
+exports.httpJsonRequest = httpJsonRequest;
+exports.getRequestFn = getRequestFn;
+exports.downloadOnFs = downloadOnFs;
+exports.objToCookies = objToCookies;
+exports.cookiesToObj = cookiesToObj;
 const fs_1 = require("fs");
 const promises_1 = require("fs/promises");
 const http_1 = require("http");
 const https_1 = require("https");
-const iggs_utils_1 = require("iggs-utils");
+const revivers_1 = require("@bitbeater/ecma-utils/revivers");
 const path_1 = require("path");
 const querystring_1 = require("querystring");
 const url_1 = require("url");
@@ -17,7 +25,6 @@ function httpSimpleReq(reqOpts, callback) {
     // req.end();
     return req;
 }
-exports.httpSimpleReq = httpSimpleReq;
 function httpRequest(reqOpts, payload) {
     return new Promise((resolve, reject) => {
         const req = httpSimpleReq(reqOpts, response => {
@@ -39,7 +46,6 @@ function httpRequest(reqOpts, payload) {
         req.end();
     });
 }
-exports.httpRequest = httpRequest;
 function httpRawRequest(reqOpts, payload) {
     return new Promise((resolve, reject) => {
         reqOpts = adaptRequestOpts(reqOpts);
@@ -63,31 +69,27 @@ function httpRawRequest(reqOpts, payload) {
         req.end();
     });
 }
-exports.httpRawRequest = httpRawRequest;
 function httpJsonRequest(req, data, revivers = []) {
     const payload = JSON.stringify(data);
     const reqOptions = toRequestOpts(req);
-    const headers = Object.assign({}, (reqOptions.headers || {}));
+    const headers = { ...(reqOptions.headers || {}) };
     headers[Header['Content-Type']] = 'application/json; charset=utf-8';
-    headers[Header['Content-Length']] = (payload === null || payload === void 0 ? void 0 : payload.length) || 0;
+    headers[Header['Content-Length']] = payload?.length || 0;
     reqOptions.headers = headers;
     return httpRequest(req, payload).then(resp => {
-        var _a, _b, _c, _d;
-        if (((_a = resp === null || resp === void 0 ? void 0 : resp.data) === null || _a === void 0 ? void 0 : _a.length) && ((_d = (_c = (_b = resp === null || resp === void 0 ? void 0 : resp.response) === null || _b === void 0 ? void 0 : _b.headers) === null || _c === void 0 ? void 0 : _c[Header['Content-Type'].toLowerCase()]) === null || _d === void 0 ? void 0 : _d.includes('application/json'))) {
-            const rev = iggs_utils_1.reviver.mergeRevivers(...revivers);
-            return Object.assign(Object.assign({}, resp), { data: JSON.parse(resp.data, rev) });
+        if (resp?.data?.length && resp?.response?.headers?.[Header['Content-Type'].toLowerCase()]?.includes('application/json')) {
+            const rev = (0, revivers_1.mergeRevivers)(...revivers);
+            return { ...resp, data: JSON.parse(resp.data, rev) };
         }
         return resp;
     });
 }
-exports.httpJsonRequest = httpJsonRequest;
 function getProtocol(req) {
-    var _a;
     let rq = req;
     if (typeof rq === 'string') {
         rq = new url_1.URL(rq);
     }
-    return (_a = rq === null || rq === void 0 ? void 0 : rq.protocol) === null || _a === void 0 ? void 0 : _a.replace(/\:/gm, '');
+    return rq?.protocol?.replace(/\:/gm, '');
 }
 function getRequestFn(req) {
     const protocol = getProtocol(req);
@@ -104,7 +106,6 @@ function getRequestFn(req) {
         return https_1.request;
     return http_1.request;
 }
-exports.getRequestFn = getRequestFn;
 /**
  * Downloads from url and save on fs, optimal for big files because uses streams.
  * If the file directory does not exist, it will be recursively created.
@@ -140,7 +141,6 @@ function downloadOnFs(reqOpts, file, body) {
         });
     });
 }
-exports.downloadOnFs = downloadOnFs;
 //--------------------------------------------------------------------------------------------------------------------------------
 function objToCookies(obj) {
     let retVal = '';
@@ -151,7 +151,6 @@ function objToCookies(obj) {
     retVal = cookies.join(';');
     return retVal;
 }
-exports.objToCookies = objToCookies;
 function cookiesToObj(cookiesStr) {
     if (!cookiesStr)
         return;
@@ -163,7 +162,6 @@ function cookiesToObj(cookiesStr) {
     }
     return cookiesObj;
 }
-exports.cookiesToObj = cookiesToObj;
 function adaptRequestOpts(reqOpts) {
     if (!reqOpts)
         return;
@@ -177,8 +175,8 @@ function adaptRequestOpts(reqOpts) {
     reqOpts.host = url.host;
     reqOpts.hostname = url.hostname;
     reqOpts.path = url.pathname;
-    if (reqOpts === null || reqOpts === void 0 ? void 0 : reqOpts.searchParams)
-        reqOpts.path += '?' + (0, querystring_1.stringify)(reqOpts === null || reqOpts === void 0 ? void 0 : reqOpts.searchParams);
+    if (reqOpts?.searchParams)
+        reqOpts.path += '?' + (0, querystring_1.stringify)(reqOpts?.searchParams);
     return reqOpts;
 }
 function toRequestOpts(reqOpts) {

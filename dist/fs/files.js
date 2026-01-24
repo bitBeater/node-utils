@@ -1,11 +1,33 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.silentRemove = exports.copyFileRecursive = exports.writeFileAndDir = exports.remove = exports.writeJson = exports.readJson = exports.write = exports.append = exports.exists = exports.removeSync = exports.deserealizeObjectSync = exports.serealizeObjectSync = exports.readGZipSync = exports.writeGZipSync = exports.fileLinesSync = exports.insertBetweenPlacweHoldersSync = exports.readJsonSync = exports.writeJsonSync = exports.writeSync = void 0;
+exports.exists = void 0;
+exports.writeSync = writeSync;
+exports.writeJsonSync = writeJsonSync;
+exports.readJsonSync = readJsonSync;
+exports.insertBetweenPlacweHoldersSync = insertBetweenPlacweHoldersSync;
+exports.fileLinesSync = fileLinesSync;
+exports.writeGZipSync = writeGZipSync;
+exports.readGZipSync = readGZipSync;
+exports.serealizeObjectSync = serealizeObjectSync;
+exports.deserealizeObjectSync = deserealizeObjectSync;
+exports.removeSync = removeSync;
+exports.append = append;
+exports.write = write;
+exports.readJson = readJson;
+exports.writeJson = writeJson;
+exports.remove = remove;
+exports.writeFileAndDir = writeFileAndDir;
+exports.copyFileRecursive = copyFileRecursive;
+exports.silentRemove = silentRemove;
+exports.sha256 = sha256;
+exports.tail = tail;
 const fs_1 = require("fs");
 const promises_1 = require("fs/promises");
 const path_1 = require("path");
-const iggs_utils_1 = require("iggs-utils");
+const crypto_1 = require("crypto");
 const zlib_1 = require("zlib");
+const promises_2 = require("@bitbeater/ecma-utils/promises");
+// import { promises, reviver } from 'iggs-utils';
 /** *
  * If `data` is a plain object, it must have an own (not inherited) `toString`function property.
  *
@@ -21,7 +43,6 @@ function writeSync(file, data, options) {
         (0, fs_1.mkdirSync)((0, path_1.dirname)(dirPath));
     (0, fs_1.writeFileSync)(file, data || '');
 }
-exports.writeSync = writeSync;
 /**
  * Writes the given object as JSON to the specified file path synchronously.
  * @param path - The file path where the JSON should be written.
@@ -30,7 +51,6 @@ exports.writeSync = writeSync;
 function writeJsonSync(path, object) {
     (0, fs_1.writeFileSync)(path, JSON.stringify(object));
 }
-exports.writeJsonSync = writeJsonSync;
 /**
  * Reads and parses a JSON file synchronously.
  *
@@ -46,7 +66,6 @@ function readJsonSync(path, reviver) {
     const retVal = JSON.parse(data.toString(), reviver);
     return retVal;
 }
-exports.readJsonSync = readJsonSync;
 /**
  * Inserts the specified data between the given placeholders in the file synchronously.
  * If the file does not exist, it creates the file and inserts the data.
@@ -57,17 +76,15 @@ exports.readJsonSync = readJsonSync;
  * @param endPlaceHolder - The ending placeholder.
  */
 function insertBetweenPlacweHoldersSync(filePath, data, beginPlaceHolder, endPlaceHolder) {
-    var _a, _b, _c, _d, _e, _f;
-    const writeData = (0, fs_1.readFileSync)(filePath);
+    const writeData = (0, fs_1.readFileSync)(filePath, 'utf-8');
     if (!(0, fs_1.existsSync)(filePath)) {
         (0, fs_1.writeFileSync)(filePath, writeData);
     }
     const fileContent = (0, fs_1.readFileSync)(filePath).toString();
-    const top = (_b = (_a = fileContent === null || fileContent === void 0 ? void 0 : fileContent.split) === null || _a === void 0 ? void 0 : _a.call(fileContent, beginPlaceHolder)) === null || _b === void 0 ? void 0 : _b[0];
-    const bottom = (_f = (_e = (_c = fileContent === null || fileContent === void 0 ? void 0 : fileContent.split) === null || _c === void 0 ? void 0 : (_d = _c.call(fileContent, endPlaceHolder)).reverse) === null || _e === void 0 ? void 0 : _e.call(_d)) === null || _f === void 0 ? void 0 : _f[0];
+    const top = fileContent?.split?.(beginPlaceHolder)?.[0];
+    const bottom = fileContent?.split?.(endPlaceHolder).reverse?.()?.[0];
     (0, fs_1.writeFileSync)(filePath, `${top}\n\r${beginPlaceHolder}\n\r${data}\n\r${endPlaceHolder}\n\r${bottom}`);
 }
-exports.insertBetweenPlacweHoldersSync = insertBetweenPlacweHoldersSync;
 /**
  * Reads a file and returns an array of string lines.
  *
@@ -76,9 +93,8 @@ exports.insertBetweenPlacweHoldersSync = insertBetweenPlacweHoldersSync;
  * @returns An array of lines from the file, or null if the file cannot be read.
  */
 function fileLinesSync(path, lineSeparator = /[\n|\r]/) {
-    var _a;
     try {
-        const data = (_a = (0, fs_1.readFileSync)(path)) === null || _a === void 0 ? void 0 : _a.toString();
+        const data = (0, fs_1.readFileSync)(path)?.toString();
         if (!data)
             return null;
         return data.split(lineSeparator);
@@ -87,7 +103,6 @@ function fileLinesSync(path, lineSeparator = /[\n|\r]/) {
         console.error(error);
     }
 }
-exports.fileLinesSync = fileLinesSync;
 /**
  * Writes the given data to a file in GZip format synchronously.
  *
@@ -101,7 +116,6 @@ function writeGZipSync(filePath, data, writeFileOptions, zLibOptions) {
     const zippBuffer = (0, zlib_1.gzipSync)(buffer, zLibOptions);
     (0, fs_1.writeFileSync)(filePath, zippBuffer, writeFileOptions);
 }
-exports.writeGZipSync = writeGZipSync;
 /**
  * Reads a gzipped file synchronously and returns the uncompressed data as a Buffer.
  *
@@ -114,7 +128,6 @@ function readGZipSync(path, readFileOptions, zlibOptions) {
     const data = (0, fs_1.readFileSync)(path, readFileOptions);
     return (0, zlib_1.unzipSync)(data, zlibOptions);
 }
-exports.readGZipSync = readGZipSync;
 /**
  * Serializes an object to JSON and writes it to a file synchronously.
  * @param filePath - The path of the file to write.
@@ -123,7 +136,6 @@ exports.readGZipSync = readGZipSync;
 function serealizeObjectSync(filePath, object) {
     writeGZipSync(filePath, JSON.stringify(object));
 }
-exports.serealizeObjectSync = serealizeObjectSync;
 /**
  * Deserializes an object from a file synchronously.
  *
@@ -133,7 +145,6 @@ exports.serealizeObjectSync = serealizeObjectSync;
 function deserealizeObjectSync(filePath) {
     return JSON.parse(readGZipSync(filePath).toString());
 }
-exports.deserealizeObjectSync = deserealizeObjectSync;
 /**
  * Synchronous [`unlink(2)`](http://man7.org/linux/man-pages/man2/unlink.2.html). Returns `undefined`.
  * @return `undefined` upon success.
@@ -144,11 +155,10 @@ function removeSync(path) {
         (0, fs_1.unlinkSync)(path);
     }
     catch (e) {
-        if ((e === null || e === void 0 ? void 0 : e.code) !== 'ENOENT')
+        if (e?.code !== 'ENOENT')
             throw e;
     }
 }
-exports.removeSync = removeSync;
 /**
  * check if file exists
  *
@@ -161,7 +171,7 @@ exports.removeSync = removeSync;
 const exists = (path) => (0, promises_1.stat)(path)
     .then(() => true)
     .catch(e => {
-    if ((e === null || e === void 0 ? void 0 : e.code) === 'ENOENT')
+    if (e?.code === 'ENOENT')
         return false;
     throw e;
 });
@@ -180,7 +190,6 @@ function append(path, data, options) {
         return error;
     });
 }
-exports.append = append;
 /**
  * write to file, if the folder does not exist it will be recursively created
  *
@@ -198,13 +207,12 @@ function write(file, data, options) {
     const dirPath = (0, path_1.dirname)(file.toString());
     return (0, exports.exists)(dirPath).then(exist => {
         const _opt = typeof options === 'string' ? { encoding: options } : options;
-        let promise = iggs_utils_1.promises.of();
+        let promise = (0, promises_2.of)();
         if (!exist)
-            promise = (0, promises_1.mkdir)(dirPath, Object.assign(Object.assign({}, _opt), { recursive: true }));
+            promise = (0, promises_1.mkdir)(dirPath, { ..._opt, recursive: true });
         return promise.then(() => (0, promises_1.writeFile)(file, data || '', options));
     });
 }
-exports.write = write;
 /**
  * Asynchronously reads the entire contents of a file that contains a valid JSON string, and converts the content into an object.
  *
@@ -219,7 +227,6 @@ exports.write = write;
 function readJson(file, options, reviver) {
     return (0, promises_1.readFile)(file, options).then(fileContent => JSON.parse(fileContent.toString(), reviver));
 }
-exports.readJson = readJson;
 /**
  * Converts a JavaScript value to a JavaScript Object Notation (JSON) string, and asynchronously writes data to a file, replacing the file if it already exists.
  *
@@ -235,7 +242,6 @@ function writeJson(file, obj, options, replacer, space) {
     const data = JSON.stringify(obj, replacer, space);
     return write(file, data, options);
 }
-exports.writeJson = writeJson;
 /**
  * If `path` refers to a symbolic link, then the link is removed without affecting
  * the file or directory to which that link refers. If the `path` refers to a file
@@ -246,7 +252,6 @@ exports.writeJson = writeJson;
 function remove(path) {
     return (0, promises_1.unlink)(path).catch(e => (e.code === 'ENOENT' ? undefined : e));
 }
-exports.remove = remove;
 /**
  * Writes data to a file and creates the necessary directory structure if it doesn't exist.
  *
@@ -262,7 +267,6 @@ function writeFileAndDir(path, data, options) {
     data = typeof data === 'string' ? new TextEncoder().encode(data) : data;
     (0, fs_1.writeFileSync)(path, data, options);
 }
-exports.writeFileAndDir = writeFileAndDir;
 function copyFileRecursive(origPath, destPath) {
     const destParentDir = (0, path_1.resolve)(destPath, '..');
     if (!(0, fs_1.existsSync)(destParentDir)) {
@@ -270,7 +274,6 @@ function copyFileRecursive(origPath, destPath) {
     }
     (0, fs_1.copyFileSync)(origPath, destPath);
 }
-exports.copyFileRecursive = copyFileRecursive;
 /**
  * remove sync, without throwing NotFound error if it doesn't exist
  * @param path
@@ -285,5 +288,43 @@ function silentRemove(path, options) {
             throw error;
     }
 }
-exports.silentRemove = silentRemove;
+/**
+ * Calculates the SHA256 hash of a file.
+ *
+ * @param filePath - The path to the file.
+ * @returns The SHA256 hash of the file as a hexadecimal string.
+ */
+function sha256(filePath) {
+    const hash = (0, crypto_1.createHash)('sha256');
+    const input = (0, fs_1.readFileSync)(filePath);
+    hash.update(input);
+    return hash.digest('hex');
+}
+/**
+ * Tails a file and calls the callback with new data when the file is appended.
+ * @param filePath
+ * @param cb
+ * @returns
+ */
+function tail(filePath, cb) {
+    let previousFileSize = (0, fs_1.statSync)(filePath).size;
+    let previousCheckTime = 0;
+    return (0, fs_1.watch)(filePath, () => {
+        if (previousCheckTime === Date.now())
+            return;
+        previousCheckTime = Date.now();
+        const fileSize = (0, fs_1.statSync)(filePath).size;
+        if (fileSize === 0)
+            return;
+        const tailSize = fileSize - previousFileSize;
+        previousFileSize = fileSize;
+        if (tailSize <= 0)
+            return;
+        const buffer = new Uint8Array(tailSize);
+        const fd = (0, fs_1.openSync)(filePath, 'r');
+        (0, fs_1.readSync)(fd, buffer, 0, tailSize, fileSize - tailSize);
+        (0, fs_1.closeSync)(fd);
+        cb(buffer);
+    });
+}
 //# sourceMappingURL=files.js.map

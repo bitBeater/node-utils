@@ -1,14 +1,16 @@
-import { readFileSync, rmSync } from 'fs';
+import { readFileSync, rmSync } from 'node:fs';
 import { createServer } from 'http';
 import { join } from 'path';
-import { exists } from '../src/fs/files';
-import { downloadOnFs, httpRequest } from '../src/http';
+import { exists } from '../src/fs/files.ts';
+import { downloadOnFs, httpRequest } from '../src/http.ts';
+import { equal } from 'node:assert';
+import { it } from 'node:test';
 
 it('test httpRequest', async () => {
 	const server = createServer((_req, resp) => resp.end('Hello World\n')).listen(1337);
 
 	const resp = await httpRequest({ url: `http://localhost:1337` });
-	expect(resp.data).toBe('Hello World\n');
+	equal(resp.data, 'Hello World\n');
 	server.close();
 });
 
@@ -18,12 +20,12 @@ it('test download file', async () => {
 	const dir = join(__dirname, 'test');
 	const file = join(dir, 'test.txt');
 
-	expect(await exists(dir)).toBe(false);
-	expect(await exists(file)).toBe(false);
+	equal(await exists(dir), false);
+	equal(await exists(file), false);
 
 	await downloadOnFs({ url: `http://localhost:1337` }, file);
 
-	expect((await readFileSync(file)).toString()).toBe('Hello World\n');
+	equal((await readFileSync(file)).toString(), 'Hello World\n');
 
 	rmSync(dir, { recursive: true, force: true });
 

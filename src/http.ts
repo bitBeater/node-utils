@@ -2,7 +2,7 @@ import { createWriteStream, PathLike } from 'fs';
 import { mkdir, stat } from 'fs/promises';
 import { ClientRequest, get, IncomingMessage, request, RequestOptions } from 'http';
 import { get as httpsGet, request as httpsRequest } from 'https';
-import { reviver } from 'iggs-utils';
+import { Reviver, mergeRevivers } from '@bitbeater/ecma-utils/revivers';
 import { dirname } from 'path';
 import { stringify } from 'querystring';
 import { URL } from 'url';
@@ -86,7 +86,7 @@ export function httpRawRequest(reqOpts: HttpRequestOptions | string | URL, paylo
 export function httpJsonRequest<T>(
 	req: HttpRequestOptions | string | URL,
 	data?: object | string,
-	revivers: reviver.Reviver<any>[] = []
+	revivers: Reviver<any>[] = []
 ): Promise<HttpResponse<T>> {
 	const payload = JSON.stringify(data);
 	const reqOptions = toRequestOpts(req);
@@ -96,7 +96,7 @@ export function httpJsonRequest<T>(
 	reqOptions.headers = headers;
 	return httpRequest(req, payload).then(resp => {
 		if (resp?.data?.length && resp?.response?.headers?.[Header['Content-Type'].toLowerCase()]?.includes('application/json')) {
-			const rev = reviver.mergeRevivers(...revivers);
+			const rev = mergeRevivers(...revivers);
 			return { ...resp, data: JSON.parse(resp.data, rev) };
 		}
 

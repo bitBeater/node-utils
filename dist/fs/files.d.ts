@@ -1,16 +1,9 @@
-/// <reference types="node" />
-/// <reference types="node" />
-/// <reference types="node" />
-/// <reference types="node" />
-/// <reference types="node" />
-/// <reference types="node" />
-/// <reference types="node" />
 import { Abortable } from 'events';
 import { Mode, ObjectEncodingOptions, OpenMode, PathLike, WriteFileOptions } from 'fs';
 import { FileHandle, FlagAndOpenMode } from 'fs/promises';
 import { Stream } from 'stream';
-import { reviver } from 'iggs-utils';
 import { ZlibOptions } from 'zlib';
+import { Reviver, Replacer } from '@bitbeater/ecma-utils/revivers';
 /** *
  * If `data` is a plain object, it must have an own (not inherited) `toString`function property.
  *
@@ -35,7 +28,7 @@ export declare function writeJsonSync(path: string, object: any): void;
  * @param {reviver.Reviver<any>} [reviver] - Optional reviver function for JSON.parse.
  * @returns {T} - The parsed JSON object.
  */
-export declare function readJsonSync<T>(path: string, reviver?: reviver.Reviver<any>): T;
+export declare function readJsonSync<T>(path: string, reviver?: Reviver<any>): T;
 /**
  * Inserts the specified data between the given placeholders in the file synchronously.
  * If the file does not exist, it creates the file and inserts the data.
@@ -143,7 +136,7 @@ export declare function write(file: PathLike | FileHandle, data?: string | NodeJ
 export declare function readJson<T>(file: PathLike | FileHandle, options?: ({
     encoding?: null | undefined;
     flag?: OpenMode | undefined;
-} & Abortable) | null, reviver?: reviver.Reviver<any>): Promise<T>;
+} & Abortable) | null, reviver?: Reviver<any>): Promise<T>;
 /**
  * Converts a JavaScript value to a JavaScript Object Notation (JSON) string, and asynchronously writes data to a file, replacing the file if it already exists.
  *
@@ -158,7 +151,7 @@ export declare function readJson<T>(file: PathLike | FileHandle, options?: ({
 export declare function writeJson(file: PathLike | FileHandle, obj: any, options?: (ObjectEncodingOptions & {
     mode?: Mode | undefined;
     flag?: OpenMode | undefined;
-} & Abortable) | BufferEncoding | null, replacer?: reviver.Replacer<any>, space?: string | number): Promise<void>;
+} & Abortable) | BufferEncoding | null, replacer?: Replacer<any>, space?: string | number): Promise<void>;
 /**
  * If `path` refers to a symbolic link, then the link is removed without affecting
  * the file or directory to which that link refers. If the `path` refers to a file
@@ -182,4 +175,18 @@ export declare function copyFileRecursive(origPath: string, destPath: string): v
  * @param options
  */
 export declare function silentRemove(path: string | URL, options?: FileSystemRemoveOptions): void;
+/**
+ * Calculates the SHA256 hash of a file.
+ *
+ * @param filePath - The path to the file.
+ * @returns The SHA256 hash of the file as a hexadecimal string.
+ */
+export declare function sha256(filePath: string): string;
+/**
+ * Tails a file and calls the callback with new data when the file is appended.
+ * @param filePath
+ * @param cb
+ * @returns
+ */
+export declare function tail(filePath: string, cb: (chunk: Uint8Array) => void): import("fs").FSWatcher;
 //# sourceMappingURL=files.d.ts.map

@@ -1,15 +1,20 @@
 import { Abortable } from 'events';
 import {
+	closeSync,
 	copyFileSync,
 	existsSync,
 	mkdirSync,
 	Mode,
 	ObjectEncodingOptions,
 	OpenMode,
+	openSync,
 	PathLike,
 	readFileSync,
+	readSync,
 	rmSync,
+	statSync,
 	unlinkSync,
+	watch,
 	WriteFileOptions,
 	writeFileSync
 } from 'fs';
@@ -18,8 +23,10 @@ import { dirname, resolve } from 'path';
 import { Stream } from 'stream';
 
 import { createHash } from 'crypto';
-import { promises, reviver } from 'iggs-utils';
 import { gzipSync, unzipSync, ZlibOptions } from 'zlib';
+import { Reviver, Replacer } from '@bitbeater/ecma-utils/revivers';
+import { of } from '@bitbeater/ecma-utils/promises';
+// import { promises, reviver } from 'iggs-utils';
 
 /** *
  * If `data` is a plain object, it must have an own (not inherited) `toString`function property.
@@ -53,7 +60,7 @@ export function writeJsonSync(path: string, object: any) {
  * @param {reviver.Reviver<any>} [reviver] - Optional reviver function for JSON.parse.
  * @returns {T} - The parsed JSON object.
  */
-export function readJsonSync<T>(path: string, reviver?: reviver.Reviver<any>): T {
+export function readJsonSync<T>(path: string, reviver?: Reviver<any>): T {
 	const data = readFileSync(path);
 	if (!data) return;
 
@@ -72,7 +79,7 @@ export function readJsonSync<T>(path: string, reviver?: reviver.Reviver<any>): T
  * @param endPlaceHolder - The ending placeholder.
  */
 export function insertBetweenPlacweHoldersSync(filePath: string, data: string, beginPlaceHolder: string, endPlaceHolder: string) {
-	const writeData = readFileSync(filePath);
+	const writeData = readFileSync(filePath, 'utf-8');
 	if (!existsSync(filePath)) {
 		writeFileSync(filePath, writeData);
 	}
@@ -117,7 +124,7 @@ export function writeGZipSync(
 	zLibOptions?: ZlibOptions
 ) {
 	const buffer = data instanceof Buffer ? data : Buffer.from(data);
-	const zippBuffer = gzipSync(buffer, zLibOptions);
+	const zippBuffer = gzipSync((buffer as unknown as ArrayBuffer), zLibOptions) as unknown as any;
 	writeFileSync(filePath, zippBuffer, writeFileOptions);
 }
 
@@ -135,7 +142,7 @@ export function readGZipSync(
 	zlibOptions?: ZlibOptions
 ): Buffer {
 	const data = readFileSync(path, readFileOptions);
-	return unzipSync(data, zlibOptions);
+	return unzipSync(data as any, zlibOptions);
 }
 
 /**
@@ -238,7 +245,7 @@ export function write(
 	const dirPath = dirname(file.toString());
 	return exists(dirPath).then(exist => {
 		const _opt = typeof options === 'string' ? { encoding: options } : options;
-		let promise = promises.of();
+		let promise = of();
 		if (!exist) promise = mkdir(dirPath, { ..._opt, recursive: true });
 		return promise.then(() => writeFile(file, data || '', options));
 	});
@@ -263,7 +270,7 @@ export function readJson<T>(
 			flag?: OpenMode | undefined;
 		} & Abortable)
 		| null,
-	reviver?: reviver.Reviver<any>
+	reviver?: Reviver<any>
 ): Promise<T> {
 	return readFile(file, options).then(fileContent => JSON.parse(fileContent.toString(), reviver) as T);
 }
@@ -289,7 +296,7 @@ export function writeJson(
 		} & Abortable)
 		| BufferEncoding
 		| null,
-	replacer?: reviver.Replacer<any>,
+	replacer?: Replacer<any>,
 	space?: string | number
 ): Promise<void> {
 	const data = JSON.stringify(obj, replacer as any, space);
@@ -361,11 +368,45 @@ export function silentRemove(path: string | URL, options?: FileSystemRemoveOptio
  * @param filePath - The path to the file.
  * @returns The SHA256 hash of the file as a hexadecimal string.
  */
-export function sha265(filePath: string): string {
+export function sha256(filePath: string): string {
 
 	const hash = createHash('sha256');
 	const input = readFileSync(filePath);
-	hash.update(input);
+	hash.update(input as any);
 
 	return hash.digest('hex');
+}
+
+
+/**
+ * Tails a file and calls the callback with new data when the file is appended.
+ * @param filePath 
+ * @param cb 
+ * @returns 
+ */
+
+export function tail(filePath: string, cb: (chunk: Uint8Array) => void) {
+	let previousFileSize = statSync(filePath).size;
+	let previousCheckTime = 0;
+
+	return watch(filePath, () => {
+		if (previousCheckTime === Date.now()) return;
+
+		previousCheckTime = Date.now();
+
+		const fileSize = statSync(filePath).size;
+		if (fileSize === 0) return;
+
+		const tailSize = fileSize - previousFileSize;
+		previousFileSize = fileSize;
+
+		if (tailSize <= 0) return;
+
+		const buffer = new Uint8Array(tailSize);
+		const fd = openSync(filePath, 'r');
+		readSync(fd, buffer, 0, tailSize, fileSize - tailSize);
+		closeSync(fd);
+
+		cb(buffer);
+	});
 }
