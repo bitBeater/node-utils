@@ -7,23 +7,37 @@
 			"request": "launch",
 			"runtimeExecutable": "ts-node",
 			//"runtimeArgs": ["--nolazy", "-r", "ts-node"],
-			"args": ["${file}", "--transpile-only", "--nolazy", "-r"],
+			"args": [
+				"${file}",
+				"--transpile-only",
+				"--nolazy",
+				"-r"
+			],
 			"cwd": "${workspaceRoot}",
 			"internalConsoleOptions": "openOnSessionStart",
 			// "skipFiles": ["<node_internals>/**", "node_modules/**"],
 			"sourceMaps": true
 		},
-
 		{
-			"name": "TS Jest file",
+			"name": "test debug",
 			"type": "pwa-node",
 			"request": "launch",
-			"runtimeExecutable": "${workspaceRoot}/node_modules/.bin/jest",
-			"args": ["${fileBasenameNoExtension}", "--runInBand", "--watch", "--coverage=false", "--no-cache"],
+			"runtimeExecutable": "node",
+			"runtimeArgs": [
+				"--test",
+				"--nolazy",
+				"--import",
+				"tsx"
+			],
+			"args": [
+				"${file}"
+			],
 			"cwd": "${workspaceRoot}",
-			"console": "integratedTerminal",
-			"internalConsoleOptions": "neverOpen",
-			"sourceMaps": true
+			"internalConsoleOptions": "openOnSessionStart",
+			"skipFiles": [
+				"<node_internals>/**",
+				"node_modules/**"
+			]
 		}
 	]
 }

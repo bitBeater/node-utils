@@ -2,7 +2,8 @@ import { strictEqual } from 'node:assert';
 import { appendFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it } from 'node:test';
-import { tail } from '@bitbeater/node-utils/fs';
+import { tail, tailStream } from '@bitbeater/node-utils/fs';
+
 
 
 
@@ -70,6 +71,96 @@ describe('fs/files', () => {
                 watcher.close();
                 unlinkSync(testFilePath);
             });
+        });
+    });
+
+    describe('tailStream', () => {
+
+        it('should be called once', (t, done) => {
+
+            t.after(() => {
+                // Cleanup
+                unlinkSync(testFilePath);
+            });
+
+            // Arrange
+            const CHECK_DATA = 'Appended data';
+            const testFilePath = join(__dirname, 'tail_test.txt');
+            writeFileSync(testFilePath, 'Initial data\n');
+
+
+            // Act
+            const [readableTailStream, cancel] = tailStream(testFilePath);
+
+            setTimeout(() => {
+                appendFileSync(testFilePath, CHECK_DATA);
+                setTimeout(() => cancel(), 1);
+            }, 1);
+
+
+            let callCount = 0;
+            (
+                async () => {
+                    for await (var _ of readableTailStream) {
+                        callCount++;
+                    }
+
+                    // Assert
+                    try {
+                        strictEqual(callCount, 1);
+                    } catch (error) {
+                        done(error);
+                        return;
+                    }
+
+                    done();
+                }
+            )()
+        });
+
+
+        it('should call callback on new data appended to file', (t, done) => {
+            t.after(() => {
+                // Cleanup
+                unlinkSync(testFilePath);
+            });
+
+            // Arrange
+            const CHECK_DATA = 'Appended data';
+            const testFilePath = join(__dirname, 'tail_test.txt');
+            writeFileSync(testFilePath, 'Initial data\n');
+
+
+            // Act
+            const [readableTailStream, cancel] = tailStream(testFilePath);
+
+            setTimeout(() => {
+                appendFileSync(testFilePath, CHECK_DATA);
+                setTimeout(() => cancel(), 1);
+            }, 1);
+
+
+
+            (
+                async () => {
+                    var data: string = '';
+
+                    for await (var chunk of readableTailStream) {
+                        data = Buffer.from(chunk).toString();
+                    }
+
+                    // Assert
+                    try {
+                        strictEqual(data, CHECK_DATA);
+                    } catch (error) {
+                        done(error);
+                        return;
+                    }
+
+                    done();
+                }
+            )()
+
         });
     });
 });

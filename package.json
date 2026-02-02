@@ -1,6 +1,6 @@
 {
 	"name": "@bitbeater/node-utils",
-	"version": "2.0.0",
+	"version": "2.1.0",
 	"description": "",
 	"main": "dist/index.js",
 	"types": "dist/index.d.ts",
@@ -47,6 +47,7 @@
 	},
 	"devDependencies": {
 		"ts-node": "^10.9.2",
+		"tsx": "^4.21.0",
 		"typescript": "^5.9.3"
 	}
 }

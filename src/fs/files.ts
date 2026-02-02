@@ -3,6 +3,7 @@ import {
 	closeSync,
 	copyFileSync,
 	existsSync,
+	FSWatcher,
 	mkdirSync,
 	Mode,
 	ObjectEncodingOptions,
@@ -409,4 +410,45 @@ export function tail(filePath: string, cb: (chunk: Uint8Array) => void) {
 
 		cb(buffer);
 	});
+}
+
+/**
+ * Creates a readable stream that tails a file, emitting new data as it is appended.
+ * @example
+ * ```ts
+ * const [readableTailStream, stopTailFn] = tailStream('path/to/file.txt');
+ * for await (const chunk of readableTailStream) {
+ *    console.log('New data appended:', Buffer.from(chunk).toString());
+ * }
+ * 
+ * // To stop tailing the file, call the stopTailFn() function
+ * ```
+ * 
+ * @param filePath 
+ * @param cb 
+ * @returns  A tuple containing the readable stream and a cancel function to stop tailing the file.
+ */
+
+export function tailStream(filePath: string): [ReadableStream<Uint8Array>, () => void] {
+	var fileWatcher: FSWatcher;
+	var _controller: ReadableStreamDefaultController<Uint8Array>;
+
+
+
+	const tailReadStream = new ReadableStream<Uint8Array>({
+		start(controller) {
+			_controller = controller;
+
+			fileWatcher = tail(filePath, chunk => {
+				controller.enqueue(chunk);
+			});
+		},
+	});
+
+	const stopTail = () => {
+		_controller?.close();
+		fileWatcher?.close();
+	};
+
+	return [tailReadStream, stopTail];
 }

@@ -1,5 +1,5 @@
 import { Abortable } from 'events';
-import { Mode, ObjectEncodingOptions, OpenMode, PathLike, WriteFileOptions } from 'fs';
+import { FSWatcher, Mode, ObjectEncodingOptions, OpenMode, PathLike, WriteFileOptions } from 'fs';
 import { FileHandle, FlagAndOpenMode } from 'fs/promises';
 import { Stream } from 'stream';
 import { ZlibOptions } from 'zlib';
@@ -188,5 +188,22 @@ export declare function sha256(filePath: string): string;
  * @param cb
  * @returns
  */
-export declare function tail(filePath: string, cb: (chunk: Uint8Array) => void): import("fs").FSWatcher;
+export declare function tail(filePath: string, cb: (chunk: Uint8Array) => void): FSWatcher;
+/**
+ * Creates a readable stream that tails a file, emitting new data as it is appended.
+ * @example
+ * ```ts
+ * const [readableTailStream, stopTailFn] = tailStream('path/to/file.txt');
+ * for await (const chunk of readableTailStream) {
+ *    console.log('New data appended:', Buffer.from(chunk).toString());
+ * }
+ *
+ * // To stop tailing the file, call the stopTailFn() function
+ * ```
+ *
+ * @param filePath
+ * @param cb
+ * @returns  A tuple containing the readable stream and a cancel function to stop tailing the file.
+ */
+export declare function tailStream(filePath: string): [ReadableStream<Uint8Array>, () => void];
 //# sourceMappingURL=files.d.ts.map

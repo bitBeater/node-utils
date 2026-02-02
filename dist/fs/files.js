@@ -21,6 +21,7 @@ exports.copyFileRecursive = copyFileRecursive;
 exports.silentRemove = silentRemove;
 exports.sha256 = sha256;
 exports.tail = tail;
+exports.tailStream = tailStream;
 const fs_1 = require("fs");
 const promises_1 = require("fs/promises");
 const path_1 = require("path");
@@ -326,5 +327,38 @@ function tail(filePath, cb) {
         (0, fs_1.closeSync)(fd);
         cb(buffer);
     });
+}
+/**
+ * Creates a readable stream that tails a file, emitting new data as it is appended.
+ * @example
+ * ```ts
+ * const [readableTailStream, stopTailFn] = tailStream('path/to/file.txt');
+ * for await (const chunk of readableTailStream) {
+ *    console.log('New data appended:', Buffer.from(chunk).toString());
+ * }
+ *
+ * // To stop tailing the file, call the stopTailFn() function
+ * ```
+ *
+ * @param filePath
+ * @param cb
+ * @returns  A tuple containing the readable stream and a cancel function to stop tailing the file.
+ */
+function tailStream(filePath) {
+    var fileWatcher;
+    var _controller;
+    const tailReadStream = new ReadableStream({
+        start(controller) {
+            _controller = controller;
+            fileWatcher = tail(filePath, chunk => {
+                controller.enqueue(chunk);
+            });
+        },
+    });
+    const stopTail = () => {
+        _controller?.close();
+        fileWatcher?.close();
+    };
+    return [tailReadStream, stopTail];
 }
 //# sourceMappingURL=files.js.map
