@@ -22,6 +22,7 @@ exports.silentRemove = silentRemove;
 exports.sha256 = sha256;
 exports.tail = tail;
 exports.tailStream = tailStream;
+exports.streamToFile = streamToFile;
 const fs_1 = require("fs");
 const promises_1 = require("fs/promises");
 const path_1 = require("path");
@@ -360,5 +361,41 @@ function tailStream(filePath) {
         fileWatcher?.close();
     };
     return [tailReadStream, stopTail];
+}
+/**
+ * Streams data to a file, creating the file and necessary directories if they do not exist.
+ * The function handles backpressure by pausing the readable stream when the writable stream's internal buffer is full, and resuming it when the buffer is drained.
+ *
+ * @param readableStream
+ * @param filePath
+ * @returns
+ */
+async function streamToFile(readableStream, filePath) {
+    if (!(0, fs_1.existsSync)((0, path_1.dirname)(filePath))) {
+        (0, fs_1.mkdirSync)((0, path_1.dirname)(filePath), { recursive: true });
+    }
+    let writtenBytes = 0;
+    const writableStream = (0, fs_1.createWriteStream)(filePath);
+    try {
+        for await (const chunk of readableStream) {
+            const canContinue = writableStream.write(chunk);
+            // Apply backpressure if needed
+            if (!canContinue) {
+                await new Promise(resolve => writableStream.once('drain', resolve));
+            }
+            writtenBytes += chunk.length;
+        }
+        // Wait for stream to finish
+        await new Promise((resolve, reject) => {
+            writableStream.end();
+            writableStream.on('finish', resolve);
+            writableStream.on('error', reject);
+        });
+        return writtenBytes;
+    }
+    catch (err) {
+        writableStream.destroy();
+        throw err;
+    }
 }
 //# sourceMappingURL=files.js.map

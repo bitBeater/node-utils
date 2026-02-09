@@ -206,4 +206,13 @@ export declare function tail(filePath: string, cb: (chunk: Uint8Array) => void):
  * @returns  A tuple containing the readable stream and a cancel function to stop tailing the file.
  */
 export declare function tailStream(filePath: string): [ReadableStream<Uint8Array>, () => void];
+/**
+ * Streams data to a file, creating the file and necessary directories if they do not exist.
+ * The function handles backpressure by pausing the readable stream when the writable stream's internal buffer is full, and resuming it when the buffer is drained.
+ *
+ * @param readableStream
+ * @param filePath
+ * @returns
+ */
+export declare function streamToFile(readableStream: ReadableStream<Uint8Array>, filePath: string): Promise<number>;
 //# sourceMappingURL=files.d.ts.map

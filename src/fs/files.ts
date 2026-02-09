@@ -2,6 +2,7 @@ import { Abortable } from 'events';
 import {
 	closeSync,
 	copyFileSync,
+	createWriteStream,
 	existsSync,
 	FSWatcher,
 	mkdirSync,
@@ -451,4 +452,46 @@ export function tailStream(filePath: string): [ReadableStream<Uint8Array>, () =>
 	};
 
 	return [tailReadStream, stopTail];
+}
+
+/**
+ * Streams data to a file, creating the file and necessary directories if they do not exist.
+ * The function handles backpressure by pausing the readable stream when the writable stream's internal buffer is full, and resuming it when the buffer is drained.
+ * 
+ * @param readableStream 
+ * @param filePath 
+ * @returns 
+ */
+export async function streamToFile(readableStream: ReadableStream<Uint8Array>, filePath: string): Promise<number> {
+	if (!existsSync(dirname(filePath))) {
+		mkdirSync(dirname(filePath), { recursive: true });
+	}
+
+	let writtenBytes = 0;
+	const writableStream = createWriteStream(filePath);
+
+	try {
+		for await (const chunk of readableStream) {
+			const canContinue = writableStream.write(chunk);
+
+			// Apply backpressure if needed
+			if (!canContinue) {
+				await new Promise<void>(resolve => writableStream.once('drain', resolve));
+			}
+
+			writtenBytes += chunk.length;
+		}
+
+		// Wait for stream to finish
+		await new Promise<void>((resolve, reject) => {
+			writableStream.end();
+			writableStream.on('finish', resolve);
+			writableStream.on('error', reject);
+		});
+
+		return writtenBytes;
+	} catch (err) {
+		writableStream.destroy();
+		throw err;
+	}
 }

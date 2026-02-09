@@ -1,8 +1,8 @@
-import { strictEqual } from 'node:assert';
-import { appendFileSync, unlinkSync, writeFileSync } from 'node:fs';
+import { deepEqual, strictEqual } from 'node:assert';
+import { appendFileSync, readFileSync, unlinkSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, it } from 'node:test';
-import { tail, tailStream } from '@bitbeater/node-utils/fs';
+import { streamToFile, tail, tailStream } from '@bitbeater/node-utils/fs';
 
 
 
@@ -161,6 +161,46 @@ describe('fs/files', () => {
                 }
             )()
 
+        });
+    });
+
+    describe('streamToFile', () => {
+
+        it('should write data from stream to file', (t, done) => {
+
+            const BUFFER_SIZE = 5000;
+            const testFilePath = join(__dirname, 'stream_to_file_test.txt');
+            const CHECK_DATA = new Uint8Array(BUFFER_SIZE);
+
+            const readStream = new ReadableStream<Uint8Array>({
+                start(controller) {
+                    for (let i = 0; i < BUFFER_SIZE; i++) {
+                        const byte = i % 256;
+                        CHECK_DATA[i] = byte;
+                        controller.enqueue(new Uint8Array([byte]));
+                    }
+
+                    controller.close();
+                }
+            });
+
+            streamToFile(readStream, testFilePath).then(
+                bytesWritten => {
+                    try {
+                        strictEqual(bytesWritten, BUFFER_SIZE);
+                        const fileContent = Buffer.from(readFileSync(testFilePath));
+                        deepEqual(fileContent, Buffer.from(CHECK_DATA));
+                    } catch (error) {
+                        done(error);
+                        return;
+                    }
+                    done();
+                }).catch(done);
+
+            t.after(() => {
+                // Cleanup
+                unlinkSync(testFilePath);
+            });
         });
     });
 });
