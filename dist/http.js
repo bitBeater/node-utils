@@ -1,6 +1,9 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.downloadOnFs = downloadOnFs;
+const http_1 = require("@bitbeater/ecma-utils/http");
+const files_1 = require("./fs/files");
+const crypto_1 = require("crypto");
 // export interface HttpResponse<T> {
 // 	response: IncomingMessage;
 // 	data: T;
@@ -106,9 +109,17 @@ exports.downloadOnFs = downloadOnFs;
  * @returns
  */
 async function downloadOnFs(filePath, request, requestInit) {
-    // http(httpConf.request, httpConf.requestInit)
-    // fetch('')
-    throw new Error('Not implemented yet');
+    const response = await (0, http_1.http)(request, requestInit);
+    const hash = (0, crypto_1.createHash)('sha256');
+    const shaProxy = new TransformStream({
+        transform(chunk, controller) {
+            hash.update(chunk);
+            controller.enqueue(chunk);
+        }
+    });
+    const size = await (0, files_1.streamToFile)(response.body.pipeThrough(shaProxy), filePath);
+    const sha256 = hash.digest('hex');
+    return { response, sha256, size };
 }
 //--------------------------------------------------------------------------------------------------------------------------------
 // export function objToCookies(obj: any): string {

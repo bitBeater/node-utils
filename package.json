@@ -12,6 +12,9 @@
 		"./fs": {
 			"default": "./dist/fs/fs.js"
 		},
+		"./http": {
+			"default": "./dist/http.js"
+		},
 		"./*": {
 			"default": "./dist/*.js"
 		}

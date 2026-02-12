@@ -1,50 +1,21 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
 const node_fs_1 = require("node:fs");
-const node_path_1 = require("node:path");
-// console.log(new Uint8Array([68, 33, 123]));
-const readStream = new ReadableStream({
-    start(controller) {
-        const interval = setInterval(i => {
-            controller.enqueue(new Uint8Array([68, 33, 123]));
-        }, 500);
-        setTimeout(() => {
-            clearInterval(interval);
-            controller.close();
-        }, 5000);
+const node_crypto_1 = require("node:crypto");
+const sha256 = 'abfd4c73130792c851663170844fe0168e3d4c3a222b11f33815cfa775b7178a';
+(async () => {
+    const hash = (0, node_crypto_1.createHash)('sha256');
+    const fileStream = (0, node_fs_1.createReadStream)('/home/alex/Videos/samples/file_example_AVI_1920_2_3MG.avi');
+    for await (const chunk of fileStream) {
+        hash.update(chunk);
     }
-});
-async function streamToFile(readableStream, filePath) {
-    if (!(0, node_fs_1.existsSync)((0, node_path_1.dirname)(filePath))) {
-        (0, node_fs_1.mkdirSync)((0, node_path_1.dirname)(filePath), { recursive: true });
+    const hexSha256 = hash.digest('hex');
+    console.log('SHA256:', hexSha256);
+    if (hexSha256 === sha256) {
+        console.log('File integrity verified: SHA256 hash matches.');
     }
-    let writtenBytes = 0;
-    const writableStream = (0, node_fs_1.createWriteStream)(filePath);
-    try {
-        for await (const chunk of readableStream) {
-            const canContinue = writableStream.write(chunk);
-            // Apply backpressure if needed
-            if (!canContinue) {
-                await new Promise(resolve => writableStream.once('drain', resolve));
-            }
-            writtenBytes += chunk.length;
-        }
-        // Wait for stream to finish
-        await new Promise((resolve, reject) => {
-            writableStream.end();
-            writableStream.on('finish', resolve);
-            writableStream.on('error', reject);
-        });
-        return writtenBytes;
+    else {
+        console.log('File integrity verification failed: SHA256 hash does not match.');
     }
-    catch (err) {
-        writableStream.destroy();
-        throw err;
-    }
-}
-streamToFile(readStream, 'path/to/file.txt').then(bytes => {
-    console.log(`Finished writing ${bytes} bytes to file.`);
-}).catch(err => {
-    console.error('Error writing to file:', err);
-});
+})();
 //# sourceMappingURL=tmp.js.map

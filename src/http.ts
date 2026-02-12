@@ -1,16 +1,6 @@
-import { createWriteStream, PathLike } from 'fs';
-import { mkdir, stat } from 'fs/promises';
-import { ClientRequest, get, IncomingMessage, request, RequestOptions } from 'http';
-import { get as httpsGet, request as httpsRequest } from 'https';
 import { http, HttpRequestInit, HttpRequestInput } from '@bitbeater/ecma-utils/http';
-import { dirname } from 'path';
-import { stringify } from 'querystring';
-import { URL } from 'url';
-
-export type HttpRequest = {
-	input: string | URL | Request,
-	init?: RequestInit,
-} | string | URL;
+import { streamToFile } from './fs/files';
+import { createHash } from 'crypto';
 
 
 // export interface HttpResponse<T> {
@@ -140,14 +130,27 @@ export type HttpRequest = {
  * @param file
  * @returns
  */
-export async function downloadOnFs(filePath: string, request: HttpRequestInput, requestInit?: HttpRequestInit): Promise<IncomingMessage> {
+export async function downloadOnFs(filePath: string, request: HttpRequestInput, requestInit?: HttpRequestInit): Promise<{ response: Response, sha256: string, size: number }> {
 
-	// http(httpConf.request, httpConf.requestInit)
+	const response = await http(request, requestInit);
 
-	// fetch('')
+	const hash = createHash('sha256');
 
-	throw new Error('Not implemented yet');
+	const shaProxy = new TransformStream({
+		transform(chunk, controller) {
+			hash.update(chunk);
+			controller.enqueue(chunk);
+		}
+	});
+
+	const size = await streamToFile(response.body.pipeThrough(shaProxy), filePath);
+
+	const sha256 = hash.digest('hex');
+
+
+	return { response, sha256, size };
 }
+
 //--------------------------------------------------------------------------------------------------------------------------------
 
 // export function objToCookies(obj: any): string {
